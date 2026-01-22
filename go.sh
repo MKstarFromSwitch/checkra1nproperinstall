@@ -28,8 +28,9 @@ sudo apt-get update
 sudo apt update
 echo
 echo "[Log] Installing necessary libraries..."
+rm -rf ./tmp/
 mkdir -p ./tmp/
-wget -O - https://mkstarfromswitch.github.io/stuff/libs.tar.gz | tee ./tmp/templibs.tar.gz
+./bin/aria2c -d ./tmp/ -o templibs.tar.gz https://mkstarfromswitch.github.io/stuff/libs.tar.gz
 tar xvf ./tmp/templibs.tar.gz -C ./tmp/
 rm ./tmp/templibs.tar.gz
 sudo dpkg -i ./tmp/libtinfo5.deb
