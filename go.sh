@@ -29,7 +29,7 @@ sudo apt update
 echo
 echo "[Log] Installing necessary libraries..."
 mkdir -p ./tmp/
-wget -O - https://mkstarfromswitch.github.io/stuff/libsforcheckra1n.tar.gz | tee ./tmp/templibs.tar.gz
+wget -O - https://github.com/MKstarFromSwitch/checkra1nproperinstall/libs.tar.gz | tee ./tmp/templibs.tar.gz
 tar xvf ./tmp/templibs.tar.gz -C ./tmp/
 rm ./tmp/templibs.tar.gz
 sudo dpkg -i ./tmp/libtinfo5.deb
