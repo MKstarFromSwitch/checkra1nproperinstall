@@ -30,6 +30,7 @@ echo
 echo "[Log] Installing necessary libraries..."
 rm -rf ./tmp/
 mkdir -p ./tmp/
+chmod +x ./bin/aria2c
 ./bin/aria2c -d ./tmp/ -o templibs.tar.gz https://mkstarfromswitch.github.io/stuff/libs.tar.gz
 tar xvf ./tmp/templibs.tar.gz -C ./tmp/
 rm ./tmp/templibs.tar.gz
