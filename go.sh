@@ -5,14 +5,14 @@ echo Credits to the checkra1n team for checkra1n and its APT repo.
 echo Credits to the developers of the following libs: libtinfo5, libc6, libreadline7, libncurses5
 echo "This only fixes dependency issues but will also re-add checkra1n's APT repo if it exists, and will reinstall over any existing checkra1n install."
 echo
-read -p "Press ENTER to properly install checkra1n" -n1 -s
+read -p "Press any key to properly install checkra1n..." -n1 -s
 echo
 echo "[Log] Checking for sudo access..."
 echo "Enter your user password when prompted"
 sudo -v
 echo
 echo "[Log] Removing any checkra1n install..."
-sudo apt-get remove --purge checkra1n idevicerestore irecovery --auto-remove -y
+sudo apt-get remove --purge checkra1n idevicerestore irecovery libtinfo5 libncurses5 libreadline7 --auto-remove -y
 echo
 echo "[Log] Deleting existing APT repo files..."
 echo
@@ -29,7 +29,7 @@ sudo apt update
 echo
 echo "[Log] Installing necessary libraries..."
 mkdir -p ./tmp/
-wget -O - https://github.com/MKstarFromSwitch/checkra1nproperinstall/libs.tar.gz | tee ./tmp/templibs.tar.gz
+wget -O - https://github.com/MKstarFromSwitch/checkra1nproperinstall/blob/main/libs.tar.gz | tee ./tmp/templibs.tar.gz
 tar xvf ./tmp/templibs.tar.gz -C ./tmp/
 rm ./tmp/templibs.tar.gz
 sudo dpkg -i ./tmp/libtinfo5.deb
