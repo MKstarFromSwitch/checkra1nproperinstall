@@ -8,7 +8,15 @@ This tool both removes existing checkra1n installs and any existing checkra1n re
 
 # Well, how do I use this?
 
-First, download the script. (Go to this repo's <a href=https://github.com/MKstarFromSwitch/checkra1nproperinstall/>main page,</a> then click go.sh, then click the symbol that is similar to '⇩')
+First, install Git. (Run the command below)
+```shell
+sudo apt install git
+```
+
+Then, run this command:
+```shell
+git clone https://github.com/MKstarFromSwitch/checkra1nproperinstall.git
+```
 
 Then, open a terminal and cd into the directory where the script is downloaded. (Tip: it's usually at ~/Downloads/) and run this command: 
 ```shell
