@@ -18,7 +18,7 @@ Then, run this command:
 git clone https://github.com/MKstarFromSwitch/checkra1nproperinstall.git
 ```
 
-Then, open a terminal and cd into the directory where the script is downloaded. (Tip: it's usually at ~/Downloads/) and run this command: 
+Then, open a terminal and cd into the directory where you cloned the script and run this command: 
 ```shell
 chmod +x ./go.sh
 ```
