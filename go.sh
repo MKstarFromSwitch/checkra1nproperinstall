@@ -28,15 +28,13 @@ sudo apt-get update
 sudo apt update
 echo
 echo "[Log] Installing necessary libraries..."
-rm -rf ./tmp/
-mkdir -p ./tmp/
 chmod +x ./bin/aria2c
-./bin/aria2c -d ./tmp/ -o templibs.tar.gz https://mkstarfromswitch.github.io/stuff/libs.tar.gz
-tar xvf ./tmp/templibs.tar.gz -C ./tmp/
-rm ./tmp/templibs.tar.gz
-sudo dpkg -i ./tmp/libtinfo5.deb
-sudo dpkg -i ./tmp/libreadline7.deb
-sudo dpkg -i ./tmp/libncurses5.deb
+./bin/aria2c -o templibs.tar.gz https://mkstarfromswitch.github.io/stuff/libs.tar.gz
+tar xvf ./templibs.tar.gz
+rm ./templibs.tar.gz
+sudo dpkg -i ./libtinfo5.deb
+sudo dpkg -i ./libreadline7.deb
+sudo dpkg -i ./libncurses5.deb
 echo
 echo "[Log] Installing checkra1n (also idevicerestore and irecovery)..."
 sudo apt-get install checkra1n idevicerestore irecovery -y
