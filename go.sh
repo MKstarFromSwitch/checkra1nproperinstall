@@ -11,7 +11,7 @@ echo "[Log] Checking for sudo access..."
 echo "Enter your user password when prompted"
 sudo -v
 echo
-echo "[Log] Removing any checkra1n install..."
+echo "[Log] Removing any existing checkra1n install..."
 sudo apt-get remove --purge checkra1n idevicerestore irecovery libtinfo5 libncurses5 libreadline7 --auto-remove -y
 echo
 echo "[Log] Deleting existing APT repo files..."
@@ -35,6 +35,7 @@ rm ./templibs.tar.gz
 sudo dpkg -i ./libtinfo5.deb
 sudo dpkg -i ./libreadline7.deb
 sudo dpkg -i ./libncurses5.deb
+rm ./*.deb
 echo
 echo "[Log] Installing checkra1n (also idevicerestore and irecovery)..."
 sudo apt-get install checkra1n idevicerestore irecovery -y
