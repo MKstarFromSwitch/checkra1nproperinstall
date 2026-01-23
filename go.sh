@@ -38,10 +38,14 @@ for cmd in sudo wget gpg tar dpkg apt-get; do
   fi
 done
 
-if [ ! -x ./bin/aria2c ]; then
-  echo "[Error] ./bin/aria2c not found or not executable."
+# ---- aria2c patch ----
+if [ ! -f ./bin/aria2c ]; then
+  echo "[Error] ./bin/aria2c not found."
   exit 1
 fi
+
+chmod +x ./bin/aria2c
+# ----------------------
 
 # -----------------------------
 # Sudo access
