@@ -132,4 +132,5 @@ echo
 echo "[Log] Install complete!"
 echo "If any errors occurred, open an issue:"
 echo "https://github.com/MKstarFromSwitch/checkra1nproperinstall"
+cleanup
 exit 0
