@@ -13,9 +13,10 @@ First, install Git. (Run the command below)
 sudo apt install git
 ```
 
-Then, run this command:
+Then, run these commands:
 ```shell
 git clone https://github.com/MKstarFromSwitch/checkra1nproperinstall.git
+cd checkra1nproperinstall
 ```
 
 Then, open a terminal and cd into the directory where you cloned the script and run this command: 
