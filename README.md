@@ -4,7 +4,7 @@ Properly install checkra1n on Linux for 64-bit (not arm64!)
 
 Normally, installing checkra1n gives you errors about dependencies (usually libncurses5).
 
-This tool both removes existing checkra1n installs and any existing checkra1n repo files, installs necessary libs if they aren't installed, and reinstalls checkra1n (idevicerestore and irecovery too!)
+This tool both removes existing checkra1n installs and any existing checkra1n repo files, installs/reinstalls necessary libs, and reinstalls checkra1n (idevicerestore and irecovery too!)
 
 # Well, how do I use this?
 
