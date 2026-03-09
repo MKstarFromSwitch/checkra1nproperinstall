@@ -1,127 +1,148 @@
-#!/usr/bin/env -S bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-# Prevent running as root directly
-if [[ $EUID -eq 0 ]]; then
-  echo "[Error] Do not run this script as root. Use a normal user with sudo."
-  exit 1
-fi
+# =======================
+# Safe Checkra1n Installer
+# =======================
 
-script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-desktopfixdir="$HOME/.local/share/applications"
-mkdir -p "$desktopfixdir"
-export DEBIAN_FRONTEND=noninteractive
-
-clear
-desktop_env="${XDG_CURRENT_DESKTOP:-}"
-
-if [[ "$desktop_env" != *GNOME* ]] && ! pgrep -x gnome-shell >/dev/null; then
-   echo "WARNING: The desktop fix only works for GNOME sessions."
-   echo "You can delete this created file safely if you don't use GNOME:"
-   echo "~/.local/share/applications/checkra1n.desktop"
-else
-   echo "The desktop fix will work for your session."
-fi
-
-echo "checkra1n proper installer v1.1"
-echo
-
-read -r -n 1 -s -p "Press any key to properly install checkra1n..."
-echo -e "\n"
-
-echo "[Log] Performing sanity checks..."
-
-if [ "$(uname -m)" != "x86_64" ]; then
-  echo "[Error] checkra1n only supports x86_64 systems."
-  exit 1
-fi
-
-for cmd in sudo wget gpg tar dpkg apt-get sha256sum; do
-  if ! command -v "$cmd" >/dev/null 2>&1; then
-    echo "[Error] Required command '$cmd' is not installed."
-    exit 1
-  fi
-done
-
-if [ ! -f "$script_dir/bin/aria2c" ]; then
-  echo "[Error] $script_dir/bin/aria2c not found."
-  exit 1
-fi
-
-chmod +x "$script_dir/bin/aria2c"
-
-echo "[Log] Checking for sudo access..."
-sudo -v
-echo
-
-echo "[Log] Removing any existing checkra1n install..."
-sudo apt-get remove --purge \
-  checkra1n idevicerestore irecovery \
-  libtinfo5 libncurses5 libreadline7 \
-  --auto-remove -y
-echo
-
-echo "[Log] Deleting existing APT repo files..."
-sudo rm -f /etc/apt/sources.list.d/checkra1n.list
-sudo rm -f /usr/share/keyrings/checkra1n.gpg
-sudo apt-get update
-echo
-
-echo "[Log] Re-adding checkra1n's APT repo..."
-wget -qO- https://assets.checkra.in/debian/archive.key \
-  | gpg --dearmor \
-  | sudo tee /usr/share/keyrings/checkra1n.gpg >/dev/null
-
-echo "deb [signed-by=/usr/share/keyrings/checkra1n.gpg] https://assets.checkra.in/debian /" \
-  | sudo tee /etc/apt/sources.list.d/checkra1n.list >/dev/null
-
-sudo apt-get update
-echo
-
-echo "[Log] Installing necessary libraries..."
-
-tmpdir="$(mktemp -d)"
-cleanup() { rm -rf "$tmpdir"; }
-trap cleanup EXIT
-
-cp "$script_dir/bin/aria2c" "$tmpdir/"
-cd "$tmpdir"
-
-chmod +x aria2c
-./aria2c -o libs.tar.gz https://mkstarfromswitch.github.io/stuff/libs.tar.gz
-
-# ---------------- SHA256 VERIFICATION ----------------
+# --------- Variables ---------
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+DESKTOP_FIX_DIR="$HOME/.local/share/applications"
+TMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TMP_DIR"' EXIT
 EXPECTED_HASH="57dac5251df407ad8246ded66422780c135cce984036d769b68701898e6d07b2"
+BIN_ARIA2="$SCRIPT_DIR/bin/aria2c"
 
-echo "[Log] Verifying download integrity..."
-DOWNLOADED_HASH="$(sha256sum libs.tar.gz | awk '{print $1}')"
+# --------- Utility Functions ---------
+log() { echo "[Log] $*"; }
+error_exit() { echo "[Error] $*" >&2; exit 1; }
 
-if [[ "$DOWNLOADED_HASH" != "$EXPECTED_HASH" ]]; then
-  echo "[Error] SHA256 mismatch!"
-  echo "Expected: $EXPECTED_HASH"
-  echo "Got:      $DOWNLOADED_HASH"
-  exit 1
-fi
+check_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        error_exit "Required command '$1' is not installed."
+    fi
+}
 
-echo "[Log] SHA256 verified."
-# ----------------------------------------------------
+ensure_not_root() {
+    [[ $EUID -ne 0 ]] || error_exit "Do not run as root. Use a normal user with sudo."
+}
 
-tar xf libs.tar.gz
+confirm() {
+    read -rp "$1 [type YES to proceed]: " resp
+    [[ "$resp" == "YES" ]]
+}
 
-sudo dpkg -i ./*.deb || true
-sudo apt-get -f install -y
-echo
+verify_sha256() {
+    local file="$1"
+    local expected="$2"
+    local actual
+    actual=$(sha256sum "$file" | awk '{print $1}')
+    [[ "$actual" == "$expected" ]] || error_exit "SHA256 mismatch! Expected $expected, got $actual."
+}
 
-echo "[Log] Installing checkra1n (also idevicerestore and irecovery)..."
-sudo apt-get install checkra1n idevicerestore irecovery -y
-echo
+# --------- Desktop Fix ---------
+install_desktop_fix() {
+    mkdir -p "$DESKTOP_FIX_DIR"
+    if [[ -f "$SCRIPT_DIR/checkra1n.desktop" ]]; then
+        install -m 644 "$SCRIPT_DIR/checkra1n.desktop" "$DESKTOP_FIX_DIR/"
+        log "Desktop fix installed."
+    else
+        log "Desktop fix not found, skipping."
+    fi
+}
 
-echo "Installing desktop fix..."
-install -m 644 "$script_dir/checkra1n.desktop" "$desktopfixdir/"
-echo
+check_desktop_env() {
+    local desktop="${XDG_CURRENT_DESKTOP:-}"
+    if [[ "$desktop" != *GNOME* ]] && ! pgrep -x gnome-shell >/dev/null; then
+        log "WARNING: The desktop fix only works for GNOME sessions."
+    else
+        log "GNOME session detected. Desktop fix will work."
+    fi
+}
 
-echo "[Log] Install complete!"
-echo "If any errors occurred, open an issue:"
-echo "https://github.com/MKstarFromSwitch/checkra1nproperinstall"
-exit 0
+# --------- Sanity Checks ---------
+sanity_checks() {
+    ensure_not_root
+    check_command sudo
+    check_command wget
+    check_command gpg
+    check_command tar
+    check_command dpkg
+    check_command apt-get
+    check_command sha256sum
 
+    [[ "$(uname -m)" == "x86_64" ]] || error_exit "checkra1n only supports x86_64 systems."
+
+    [[ -f "$BIN_ARIA2" ]] || error_exit "$BIN_ARIA2 not found."
+    chmod +x "$BIN_ARIA2"
+}
+
+# --------- Repository Setup ---------
+setup_repo() {
+    log "Removing old checkra1n installs..."
+    sudo apt-get remove --purge -y checkra1n idevicerestore irecovery || true
+
+    log "Deleting old APT repo files..."
+    sudo rm -f /etc/apt/sources.list.d/checkra1n.list
+    sudo rm -f /usr/share/keyrings/checkra1n.gpg
+    sudo apt-get update
+
+    log "Adding checkra1n APT repo..."
+    wget -qO- https://assets.checkra.in/debian/archive.key \
+        | gpg --dearmor \
+        | sudo tee /usr/share/keyrings/checkra1n.gpg >/dev/null
+
+    echo "deb [signed-by=/usr/share/keyrings/checkra1n.gpg] https://assets.checkra.in/debian /" \
+        | sudo tee /etc/apt/sources.list.d/checkra1n.list >/dev/null
+
+    sudo apt-get update
+}
+
+# --------- Library Installation ---------
+install_libraries() {
+    log "Copying aria2c to temp dir..."
+    cp "$BIN_ARIA2" "$TMP_DIR/"
+    cd "$TMP_DIR"
+    chmod +x aria2c
+
+    log "Downloading libraries..."
+    ./aria2c -o libs.tar.gz https://mkstarfromswitch.github.io/stuff/libs.tar.gz
+
+    log "Verifying download..."
+    verify_sha256 libs.tar.gz "$EXPECTED_HASH"
+
+    log "Extracting libraries..."
+    tar xf libs.tar.gz
+
+    log "Installing libraries..."
+    sudo dpkg -i ./*.deb || true
+    sudo apt-get -f install -y
+}
+
+# --------- Checkra1n Installation ---------
+install_checkra1n() {
+    log "Installing checkra1n, idevicerestore, and irecovery..."
+    sudo apt-get install -y checkra1n idevicerestore irecovery
+}
+
+# --------- Main ---------
+main() {
+    clear
+    log "checkra1n proper installer v1.1"
+
+    sanity_checks
+    check_desktop_env
+    read -r -n 1 -s -p "Press any key to start installation..."
+    echo
+
+    setup_repo
+    install_libraries
+    install_checkra1n
+    install_desktop_fix
+
+    log "Installation complete!"
+    echo "If any errors occurred, open an issue:"
+    echo "https://github.com/MKstarFromSwitch/checkra1nproperinstall"
+}
+
+main
